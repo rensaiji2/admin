@@ -1222,3 +1222,32 @@ body.glass-mode .sync-status {
   .dashboard-tabs { flex-wrap: wrap; }
   .dashboard-tab { padding: 8px 14px; font-size: 0.75rem; }
 }
+
+/* ===== ADMIN TOKEN INPUT ===== */
+#adminToken {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.admin-login-card .token-hint {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(139,92,246,0.05);
+  border: 1px solid rgba(139,92,246,0.15);
+  border-radius: 10px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  text-align: left;
+}
+.admin-login-card .token-hint a {
+  color: var(--accent-purple);
+  text-decoration: none;
+}
+.admin-login-card .token-hint a:hover {
+  text-decoration: underline;
+}
+.admin-login-card .token-hint strong {
+  color: var(--text-secondary);
+}
