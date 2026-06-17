@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Team Call Quality Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Admin Login Overlay */
+    .admin-login-overlay {
+      position: fixed; inset: 0; background: var(--bg); z-index: 40000;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.5s ease;
+    }
+    .admin-login-overlay.hidden {
+      opacity: 0; pointer-events: none;
+    }
+    .admin-login-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 24px; padding: 48px 40px; width: 100%; max-width: 420px;
+      text-align: center; position: relative; overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+      animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    .admin-login-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-red));
+    }
+    .admin-logo { font-size: 3rem; margin-bottom: 8px; animation: float 3s ease-in-out infinite; }
+    .admin-brand {
+      font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #f1f5f9 0%, #8b5cf6 50%, #ec4899 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 4px;
+    }
+    .admin-subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 32px; }
+    .admin-input-group { margin-bottom: 16px; text-align: left; }
+    .admin-input-group label {
+      display: block; font-size: 0.7rem; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;
+    }
+    .admin-input {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 16px; color: var(--text);
+      font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 500;
+      transition: all 0.25s ease; outline: none;
+    }
+    .admin-input::placeholder { color: var(--text-muted); font-weight: 400; }
+    .admin-input:focus {
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 0 3px rgba(139,92,246,0.15), 0 0 20px rgba(139,92,246,0.1);
+      transform: translateY(-1px);
+    }
+    .admin-input.error { border-color: var(--accent-red); box-shadow: 0 0 0 3px var(--glow-red); animation: shake 0.4s ease; }
+    .admin-btn {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      border: none; border-radius: 14px; color: white;
+      font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: all 0.25s ease; margin-top: 8px;
+    }
+    .admin-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,92,246,0.3); }
+    .admin-error { color: var(--accent-red); font-size: 0.8rem; font-weight: 500; margin-top: 12px; min-height: 20px; opacity: 0; transition: opacity 0.3s ease; }
+    .admin-error.show { opacity: 1; }
+    .admin-hint {
+      margin-top: 20px; padding: 12px;
+      background: rgba(139,92,246,0.05); border: 1px solid rgba(139,92,246,0.15);
+      border-radius: 12px; font-size: 0.75rem; color: var(--text-muted);
+    }
+
+    /* Admin Header */
+    .admin-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border);
+    }
+    .admin-header-left { display: flex; align-items: center; gap: 16px; }
+    .admin-header-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2);
+      color: var(--accent-purple); font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 2px;
+      padding: 6px 16px; border-radius: 100px;
+    }
+    .admin-header h1 {
+      font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #f1f5f9 0%, #8b5cf6 50%, #ec4899 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .admin-logout-btn {
+      padding: 10px 20px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text-secondary); font-family: 'Inter', sans-serif;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .admin-logout-btn:hover { border-color: var(--accent-red); color: var(--accent-red); background: rgba(239,68,68,0.05); }
+
+    /* Admin only shows dashboard - hide personal tracker stuff */
+    .admin-view .top-row,
+    .admin-view .notepad-section { display: none !important; }
+    .admin-view .dashboard-row { margin-top: 0; }
+
+    /* Admin refresh button */
+    .admin-refresh {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text-secondary); font-size: 0.8rem;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease; margin-left: 12px;
+    }
+    .admin-refresh:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+    .admin-refresh.spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  </style>
+<base target="_blank">
+<base target="_blank">
+</head>
+<body>
+
+  <!-- Background Effects -->
+  <div class="bg-orb orb-1" style="background: var(--accent-purple);"></div>
+  <div class="bg-orb orb-2" style="background: var(--accent-pink);"></div>
+  <div class="bg-orb orb-3" style="background: var(--accent-blue);"></div>
+  <div class="particles" id="particles"></div>
+
+  <!-- Admin Login Overlay -->
+  <div class="admin-login-overlay" id="adminLoginOverlay">
+    <div class="admin-login-card">
+      <div class="admin-logo">&#128272;</div>
+      <div class="admin-brand">ADMIN DASHBOARD</div>
+      <div class="admin-subtitle">Team Call Quality Tracker</div>
+
+      <div class="admin-input-group">
+        <label for="adminPass">Admin Password</label>
+        <input type="password" id="adminPass" class="admin-input" placeholder="Enter admin password" autocomplete="off">
+      </div>
+
+      <button class="admin-btn" id="adminLoginBtn" onclick="adminLogin()">&#128272; Access Dashboard</button>
+      <div class="admin-error" id="adminError"></div>
+    </div>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <div class="app admin-view" id="adminApp" style="display:none;">
+
+    <div class="admin-header">
+      <div class="admin-header-left">
+        <div class="admin-header-badge">&#128272; Admin View</div>
+        <h1>Team Dashboard</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="admin-refresh" id="adminRefresh" onclick="adminRefresh()">&#128260; Refresh</button>
+        <button class="admin-refresh" onclick="clearAllAbsent()" style="border-color:var(--accent-red);color:var(--accent-red);">&#10060; Clear Absent</button>
+        <button class="admin-logout-btn" onclick="adminLogout()">&#128682; Logout</button>
+      </div>
+    </div>
+
+    <!-- Sync Status -->
+    <div class="sync-status" id="syncStatus" style="position:static;margin-bottom:16px;width:fit-content;">
+      <span class="sync-dot" id="syncDot"></span>
+      <span class="sync-text" id="syncText">Ready</span>
+      <button class="sync-retry" id="syncRetry" onclick="retrySync()" title="Retry connection">&#128260;</button>
+    </div>
+
+    <!-- Team ID Input (admin can view any team) -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header">
+        <span class="card-title">&#128269; Select Team</span>
+        <div class="card-icon icon-purple">&#128101;</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="input-label">Team ID</label>
+          <div class="input-wrapper">
+            <input type="text" id="adminTeamId" class="input-field" placeholder="e.g. team-alpha" style="padding-left:16px;" maxlength="30">
+          </div>
+        </div>
+        <button class="admin-btn" style="width:auto;padding:14px 24px;margin-top:0;" onclick="adminLoadTeam()">&#128269; Load Team</button>
+      </div>
+    </div>
+
+    <!-- FULL WIDTH DASHBOARD ROW -->
+    <div class="dashboard-row">
+      <div class="section-title">&#128101; Team Dashboard</div>
+
+      <!-- Team Stats Summary Bar -->
+      <div class="team-stats-bar" id="teamStatsBar">
+        <div class="team-stat-box">
+          <div class="team-stat-label">Members</div>
+          <div class="team-stat-value" id="teamMemberCount">0</div>
+        </div>
+        <div class="team-stat-box">
+          <div class="team-stat-label">Team Avg Score</div>
+          <div class="team-stat-value" id="teamAvgScore">--</div>
+        </div>
+        <div class="team-stat-box">
+          <div class="team-stat-label">Total Calls</div>
+          <div class="team-stat-value" id="teamTotalCalls">0</div>
+        </div>
+        <div class="team-stat-box">
+          <div class="team-stat-label">Total Releases</div>
+          <div class="team-stat-value" id="teamTotalReleases">0</div>
+        </div>
+        <div class="team-stat-box">
+          <div class="team-stat-label">Total Drops</div>
+          <div class="team-stat-value" id="teamTotalDrops">0</div>
+        </div>
+        <div class="team-stat-box highlight">
+          <div class="team-stat-label">Releases to 85%</div>
+          <div class="team-stat-value" id="teamReleasesNeeded">--</div>
+        </div>
+      </div>
+
+      <!-- Team Progress Table -->
+      <div class="card dashboard-card">
+        <div class="team-table-header">
+          <span class="th-rank">#</span>
+          <span class="th-member">Member</span>
+          <span class="th-score">Score</span>
+          <span class="th-bar"></span>
+          <span class="th-releases">Rel</span>
+          <span class="th-drops">Drp</span>
+          <span class="th-calls">Calls</span>
+          <span class="th-status">Status</span>
+          <span class="th-activity"></span>
+          <span class="th-action">Action</span>
+        </div>
+        <div class="team-list-full" id="teamList">
+          <div class="team-empty">Enter a Team ID above to load data</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Member Detail Overlay -->
+    <div class="member-detail-overlay" id="memberDetailOverlay" onclick="closeMemberDetail(event)">
+      <div class="member-detail-card" onclick="event.stopPropagation()">
+        <button class="member-detail-close" onclick="closeMemberDetail()">&times;</button>
+        <div class="member-detail-header">
+          <div class="member-detail-avatar-wrapper">
+            <div class="member-detail-avatar" id="detailAvatar">A</div>
+            <label class="avatar-upload-btn" title="Upload profile picture">
+              <input type="file" id="avatarUpload" accept="image/*" style="display:none;" onchange="handleAvatarUpload(this)">
+              &#128247;
+            </label>
+          </div>
+          <div class="member-detail-info">
+            <div class="member-detail-name" id="detailName">Member Name</div>
+            <div class="member-detail-rank" id="detailRank">Rank #1</div>
+          </div>
+          <div class="member-detail-score" id="detailScore">85.0%</div>
+        </div>
+        <div class="member-detail-body">
+          <div class="detail-grid">
+            <div class="detail-stat">
+              <div class="detail-stat-label">Releases</div>
+              <div class="detail-stat-value" id="detailReleases">0</div>
+            </div>
+            <div class="detail-stat">
+              <div class="detail-stat-label">Drops</div>
+              <div class="detail-stat-value" id="detailDrops">0</div>
+            </div>
+            <div class="detail-stat">
+              <div class="detail-stat-label">Total Calls</div>
+              <div class="detail-stat-value" id="detailCalls">0</div>
+            </div>
+            <div class="detail-stat">
+              <div class="detail-stat-label">Streak</div>
+              <div class="detail-stat-value" id="detailStreak">0</div>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">&#128200; Progress to 85%</div>
+            <div class="detail-progress-track">
+              <div class="detail-progress-fill" id="detailProgressFill" style="width: 0%"></div>
+            </div>
+            <div class="detail-progress-labels">
+              <span id="detailProgressText">0 / 0 calls</span>
+              <span id="detailProgressPct">0%</span>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">&#127919; Target Analysis</div>
+            <div class="detail-target-box" id="detailTargetBox">
+              <div class="detail-target-value" id="detailTargetValue">--</div>
+              <div class="detail-target-detail" id="detailTargetDetail">--</div>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">&#128293; Current Streak</div>
+            <div class="detail-streak-row">
+              <span class="detail-streak-icon">&#128293;</span>
+              <span class="detail-streak-count" id="detailStreakCount">0</span>
+              <span class="detail-streak-label">releases without a drop</span>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">&#128221; Admin Notes (Private)</div>
+            <textarea class="detail-note-input" id="detailNoteInput" placeholder="Add private notes about this member...
+- Coaching needed
+- Performance issues
+- Praise/recognition" oninput="updateDetailNote()"></textarea>
+            <div class="detail-note-saved" id="detailNoteSaved">Saved</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">&#9200; Last Active</div>
+            <div class="detail-last-active" id="detailLastActive">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
