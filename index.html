@@ -133,6 +133,14 @@
         <input type="password" id="adminPass" class="admin-input" placeholder="Enter admin password" autocomplete="off">
       </div>
 
+      <div class="admin-input-group">
+        <label for="adminToken">GitHub Token (optional - for team sync)</label>
+        <input type="password" id="adminToken" class="admin-input" placeholder="Paste your GitHub token here" autocomplete="off" maxlength="100">
+        <div class="token-hint">
+          <strong>Need a token?</strong> Get one at <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a> with <strong>"gist"</strong> scope. Leave empty for local-only mode.
+        </div>
+      </div>
+
       <button class="admin-btn" id="adminLoginBtn" onclick="adminLogin()">&#128272; Access Dashboard</button>
       <div class="admin-error" id="adminError"></div>
     </div>
@@ -309,7 +317,6 @@
 
   </div>
 
-  <script src="config.js"></script>
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
