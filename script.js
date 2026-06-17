@@ -29,10 +29,7 @@ let teamId = '';
 let teamData = {};
 let currentAdminTeam = '';
 
-// Read token from config.js
-if (typeof TEAM_CONFIG !== 'undefined' && TEAM_CONFIG.githubToken) {
-  githubToken = TEAM_CONFIG.githubToken.trim();
-}
+// Token will be read from input field after login
 
 // ===== ADMIN LOGIN =====
 const adminPassInput = document.getElementById('adminPass');
@@ -40,8 +37,14 @@ const adminError = document.getElementById('adminError');
 
 function adminLogin() {
   const pass = adminPassInput.value.trim();
+  const token = document.getElementById('adminToken').value.trim();
+
   if (pass === ADMIN_PASSWORD) {
     localStorage.setItem('callTracker_admin', 'true');
+    if (token) {
+      githubToken = token;
+      localStorage.setItem('callTracker_adminToken', token);
+    }
     showAdminDashboard();
   } else {
     adminPassInput.classList.add('error');
@@ -60,6 +63,12 @@ function showAdminDashboard() {
   document.getElementById('adminLoginOverlay').classList.add('hidden');
   document.getElementById('adminApp').style.display = '';
 
+  // Load saved token
+  const savedToken = localStorage.getItem('callTracker_adminToken');
+  if (savedToken) {
+    githubToken = savedToken;
+  }
+
   // Check for saved team
   const savedTeam = localStorage.getItem('callTracker_adminTeam');
   if (savedTeam) {
@@ -71,6 +80,13 @@ function showAdminDashboard() {
 // Check if already logged in
 if (localStorage.getItem('callTracker_admin') === 'true') {
   showAdminDashboard();
+} else {
+  // Pre-fill token if saved
+  const savedToken = localStorage.getItem('callTracker_adminToken');
+  if (savedToken) {
+    const tokenInput = document.getElementById('adminToken');
+    if (tokenInput) tokenInput.value = savedToken;
+  }
 }
 
 adminPassInput.addEventListener('keydown', (e) => {
